@@ -11,8 +11,7 @@ W1 = None
 W2 = None
 W3 = None
 W4 = None
-dx = [1, 0, 1]
-dy = [1, 0, 1]
+
 
 weight = np.array([W1, W2, W3, W4])
 ai = np.array([0, 0, 0, 0])
