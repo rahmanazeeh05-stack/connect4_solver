@@ -41,17 +41,9 @@ def isboardfilled(board):
 def printboard(board):
     for r in range(ROWS):
         for c in range(COL):
-            print(f"| {board[r][c]} ", end="")
+            print("|",board[r][c], end="")
         print("|")
-board = initilize_board()
 
-r, c, new_board = movesimulation(board, 3, AI)
-
-print("Original board:")
-print(board)
-
-print("Simulated board:")
-printboard(new_board)  
                   
             
         

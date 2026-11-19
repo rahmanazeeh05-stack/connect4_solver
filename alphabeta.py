@@ -3,8 +3,6 @@ import math
 from hurastic import *
 from board import *
 
-AI = 1
-HUMAN = 2
 def minimax(board,depth,k,alpha,beta,mx_player):
     if isboardfilled(board):
         ai_player,human_player=get_all_windows(board)
