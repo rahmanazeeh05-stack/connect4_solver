@@ -1,36 +1,40 @@
 from board import *
 from alphabeta import *
 from hurastic import *
+import numpy as np
 
-board=initilize_board()
-k=int(input("enter value of k:"))
+weights1 = np.array([20, 10, 2, 0])
+weights2 = np.array([1, 3, 10, 20])
+
+board = initilize_board()
+k = int(input("enter value of k:"))
+while k<1:
+    k = int(input("k must be >= 1:"))
 while not isboardfilled(board):
     printboard(board)
     print("-------------------------")
-    ai_turn=bestmove(board,k)
-    makemove(board,ai_turn,AI)
+    ai1_turn = bestmove(board, k,AI1,weights1)
+    makemove(board, ai1_turn, AI1)
     printboard(board)
     print("-------------------------")
-    if isboardfilled(board):
-        break
-    
-    human_turn=int(input("choose col:"))
-    while human_turn not in legalmove(board):
-       human_turn=int(input("invalid col try again:"))
-    makemove(board,human_turn,HUMAN)
-    printboard(board)
-    print("-------------------------")
-    
     if isboardfilled(board):
         break
 
-ai_final,human_final=get_all_windows(board)
-score=ai_final[3]-human_final[3]
-print("human score:", human_final[3])
-print("ai score:", ai_final[3])
-if score>0:
-    print("AI wins")
-elif score<0:
-    print("HUMAN wins")
+    ai2_turn = bestmove(board, k,AI2,weights2)
+    makemove(board, ai2_turn, AI2)
+    printboard(board)
+    print("-------------------------")
+
+    if isboardfilled(board):
+        break
+
+ai1_final, ai2_final = get_all_windows(board)
+score = ai1_final[3] - ai2_final[3]
+print("ai2 score:", ai2_final[3])
+print("ai1 score:", ai1_final[3])
+if score > 0:
+    print("AI1 wins")
+elif score < 0:
+    print("AI2 wins")
 else:
     print("draw")
