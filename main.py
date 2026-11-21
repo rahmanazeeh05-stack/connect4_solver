@@ -8,19 +8,19 @@ weights2 = np.array([1, 3, 10, 20])
 
 board = initilize_board()
 k = int(input("enter value of k:"))
-while k<1:
+while k < 1:
     k = int(input("k must be >= 1:"))
 while not isboardfilled(board):
     printboard(board)
     print("-------------------------")
-    ai1_turn = bestmove(board, k,AI1,weights1)
+    ai1_turn = bestmove(board, k, AI1, weights1)
     makemove(board, ai1_turn, AI1)
     printboard(board)
     print("-------------------------")
     if isboardfilled(board):
         break
 
-    ai2_turn = bestmove(board, k,AI2,weights2)
+    ai2_turn = bestmove(board, k, AI2, weights2)
     makemove(board, ai2_turn, AI2)
     printboard(board)
     print("-------------------------")

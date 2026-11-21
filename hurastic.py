@@ -8,13 +8,11 @@ COLS = 7
 WINDSIZE = 4
 
 
-
-
 ai = np.array([0, 0, 0, 0])
 human = np.array([0, 0, 0, 0])
 
 
-def H(ai, human,weight):
+def H(ai, human, weight):
     """Dot product to get sum from k = 1 -> 4 (Wk * (N_ai_k - N_human_K))"""
     return weight @ ((ai - human))
 

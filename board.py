@@ -3,8 +3,6 @@ from copy import deepcopy
 from hurastic import *
 
 
-
-
 def initilize_board():
     board = np.zeros((ROWS, COLS), dtype=int)
     return board
@@ -21,7 +19,7 @@ def legalmove(board):
 
 def makemove(board, col, player):
     """
-    for a given col loop on rows down to up to know exactly 
+    for a given col loop on rows down to up to know exactly
     where the row the piece would be placed in
     """
     for r in range(ROWS - 1, -1, -1):
