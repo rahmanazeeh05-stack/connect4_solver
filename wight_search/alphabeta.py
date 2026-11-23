@@ -1,7 +1,7 @@
 import numpy as np
 import math
-from hurastic import *
-from board import *
+from .hurastic import *
+from .board import *
 
 
 def minimax(board, depth, k, alpha, beta, currentplayer, root_player, weight):
