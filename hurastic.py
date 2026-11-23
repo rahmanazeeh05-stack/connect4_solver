@@ -1,18 +1,24 @@
 import numpy as np
 
 EMPTY = 0
-AI1 = 1
-AI2 = 2
+AI = 1
+HUMAN = 2
 ROWS = 6
 COLS = 7
 WINDSIZE = 4
 
+W1 = None
+W2 = None
+W3 = None
+W4 = None
 
+
+weight = np.array([W1, W2, W3, W4])
 ai = np.array([0, 0, 0, 0])
 human = np.array([0, 0, 0, 0])
 
 
-def H(ai, human, weight):
+def H(ai, human):
     """Dot product to get sum from k = 1 -> 4 (Wk * (N_ai_k - N_human_K))"""
     return weight @ ((ai - human))
 
@@ -43,8 +49,8 @@ def get_all_windows(state):
                 if len(cells) != WINDSIZE:
                     continue
 
-                ai_count = cells.count(AI1)
-                human_count = cells.count(AI2)
+                ai_count = cells.count(AI)
+                human_count = cells.count(HUMAN)
 
                 if ai_count > 0 and human_count > 0:
                     continue
