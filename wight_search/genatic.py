@@ -23,7 +23,7 @@ def tournament(population, size):
 
 def gameStats(weights,k):
     n=len(weights)
-    status=[[0,0]]
+    status=[[0,0] for _ in range (n)]
     for i in range (n):
         for j in range(i+1,n):
             if i==j:
@@ -52,7 +52,7 @@ def gameStats(weights,k):
                 status[i][0]+=1
     
             elif score < 0:
-                status[j][1] +=1
+                status[j][0] +=1
              
             else:
               status[i][1] +=1
