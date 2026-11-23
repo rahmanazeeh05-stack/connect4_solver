@@ -7,15 +7,13 @@ ROWS = 6
 COLS = 7
 WINDSIZE = 4
 
-W1 = None
-W2 = None
-W3 = None
-W4 = None
+W1 = 3
+W2 = 4
+W3 = 5
+W4 = 6
 
 
 weight = np.array([W1, W2, W3, W4])
-ai = np.array([0, 0, 0, 0])
-human = np.array([0, 0, 0, 0])
 
 
 def H(ai, human):
