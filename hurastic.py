@@ -7,10 +7,10 @@ ROWS = 6
 COLS = 7
 WINDSIZE = 4
 
-W1 = None
-W2 = None
-W3 = None
-W4 = None
+W1 = 1
+W2 = 3
+W3 = 10
+W4 = 20
 
 
 weight = np.array([W1, W2, W3, W4])

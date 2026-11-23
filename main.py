@@ -1,14 +1,21 @@
 from board import *
 from alphabeta import *
 from hurastic import *
+from tree import *
 
 board=initilize_board()
 k=int(input("enter value of k:"))
 while not isboardfilled(board):
     printboard(board)
     print("-------------------------")
-    ai_turn=bestmove(board,k)
+    ai_turn,tree=bestmove(board,k)
+    print("---------- MINIMAX TREE ---------")
+    print_tree(tree)
+    print("------------------------------")
+    if ai_turn is None:
+        break
     makemove(board,ai_turn,AI)
+    
     printboard(board)
     print("-------------------------")
     if isboardfilled(board):
