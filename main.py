@@ -5,6 +5,8 @@ from tree import *
 
 board=initilize_board()
 k=int(input("enter value of k:"))
+while k<1:
+    k=int(input("enter a value >=1 for k"))
 while not isboardfilled(board):
     printboard(board)
     print("-------------------------")
@@ -21,10 +23,10 @@ while not isboardfilled(board):
     if isboardfilled(board):
         break
     
-    human_turn=int(input("choose col:"))
+    human_turn=int(input("choose col 1-7:"))
     while human_turn not in legalmove(board):
        human_turn=int(input("invalid col try again:"))
-    makemove(board,human_turn,HUMAN)
+    makemove(board,human_turn-1,HUMAN)
     printboard(board)
     print("-------------------------")
     

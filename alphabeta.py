@@ -28,7 +28,10 @@ def maximizing(board,depth,k,alpha,beta,node):
     bestscore=-math.inf  
     col=legalmove(board)
     for c in col:
-          r,c_chosen,new_board=movesimulation(board,c,AI)
+          result=movesimulation(board,c,AI)
+          if not result:
+              continue
+          r,c_chosen,new_board=result
           child = Node(new_board, depth + 1, AI, c)
           node.children.append(child)
           
@@ -47,7 +50,10 @@ def minimizing(board,depth,k,alpha,beta,node):
     col=legalmove(board)
     for c in col:
         
-        r,c_chosen,new_board=movesimulation(board,c,HUMAN)
+        result=movesimulation(board,c,HUMAN)
+        if not result:
+              continue
+        r,c_chosen,new_board=result
         child = Node(new_board, depth + 1, HUMAN, c)
 
         node.children.append(child)
