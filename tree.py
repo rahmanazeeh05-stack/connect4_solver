@@ -1,7 +1,5 @@
 class Node:
-
     def __init__(self, board, depth, player, move=None):
-
         self.board = board.copy()
         self.depth = depth
         self.player = player
@@ -9,7 +7,6 @@ class Node:
 
         self.value = None
         self.children = []
-
         self.cutoff = False
         self.is_leaf = False
 
@@ -17,26 +14,24 @@ class Node:
 def print_tree(node, prefix="", is_last=True, is_root=True):
 
     if is_root:
-
-        print(f"ROOT | Depth: {node.depth} | Minimax: {node.value}")
+        print(f"ROOT | Depth: {node.depth} | Value: {node.value}")
 
     else:
-
         branch = "└── " if is_last else "├── "
 
         player_name = "AI" if node.player == 1 else "HUMAN"
 
-        value_type = "Heuristic" if node.is_leaf else "Minimax"
+        node_type = "Heuristic" if node.is_leaf else "Minimax"
 
         print(
             prefix + branch +
             f"{player_name} | Column: {node.move} | "
             f"Depth: {node.depth} | "
-            f"{value_type}: {node.value}"
+            f"{node_type}: {node.value}"
         )
 
     if node.cutoff:
-        print(prefix + "    [alphabeta cutoff]")
+        print(prefix + "    [ALPHA-BETA CUTOFF]")
 
     if is_root:
         new_prefix = ""
