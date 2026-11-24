@@ -1,8 +1,8 @@
 import numpy as np
 import math
-from hurastic import *
-from board import *
-from tree import *
+from .hurastic import *
+from .board import *
+from .tree import *
 
 def minimax(board,depth,k,alpha,beta,mx_player,node):
     if isboardfilled(board):

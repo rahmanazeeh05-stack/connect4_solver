@@ -1,7 +1,7 @@
-from board import *
-from alphabeta import *
-from hurastic import *
-from tree import *
+from src.board import *
+from src.alphabeta import *
+from src.hurastic import *
+from src.tree import *
 
 board=initilize_board()
 k=int(input("enter value of k:"))
