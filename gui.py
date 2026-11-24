@@ -61,6 +61,10 @@ C_MIN = "#ffd9bf"
 C_LEAF = "#e3e3e3"
 C_PV = "#1a9d3a"               # best line (green)
 C_PRUNE = "#d32f2f"            # pruned (red)
+ZOOM_MIN = 0.02                # smallest / largest tree zoom factor
+ZOOM_MAX = 4.0
+DEFAULT_ZOOM = 0.5              # zoom used when a new tree is drawn (50%)
+ZOOM_STEP = 1.25              # factor used by the + / - buttons and Ctrl+wheel
 
 
 # ------------------------------------------------------------------- helpers
@@ -158,6 +162,9 @@ class Connect4GUI(tk.Tk):
         self.tag_node = {}         # canvas tag -> Node
         self.node_pos = {}         # id(Node) -> (x, y)
         self._press = None
+        self._zoom = 1.0           # current zoom of the drawn tree
+        self._texts = []           # (canvas id, base font size, bold) for zooming labels
+        self._base = (1, 1)        # unzoomed width / height of the drawn tree
 
         self._build_controls()
         self._build_board_area()
@@ -236,13 +243,25 @@ class Connect4GUI(tk.Tk):
         sp.pack(side="left", padx=(4, 10))
         sp.bind("<Return>", lambda e: self.draw_tree())
         ttk.Button(ctl, text="Back to full tree", command=self.reset_view).pack(side="left")
+        ttk.Separator(ctl, orient="vertical").pack(side="left", fill="y", padx=8)
+        ttk.Label(ctl, text="Zoom:").pack(side="left")
+        ttk.Button(ctl, text="\u2212", width=3,
+                   command=lambda: self.zoom_by(1 / ZOOM_STEP)).pack(side="left", padx=(4, 0))
+        ttk.Button(ctl, text="+", width=3,
+                   command=lambda: self.zoom_by(ZOOM_STEP)).pack(side="left", padx=2)
+        ttk.Button(ctl, text="Fit all", command=self.fit_tree).pack(side="left", padx=2)
+        ttk.Button(ctl, text="100%", width=5,
+                   command=lambda: self.set_zoom(1.0)).pack(side="left", padx=2)
+        self.zoom_var = tk.StringVar(value="100%")
+        ttk.Label(ctl, textvariable=self.zoom_var, width=6).pack(side="left")
         self.tree_info = tk.StringVar()
         ttk.Label(ctl, textvariable=self.tree_info, foreground="#555").pack(side="left", padx=10)
 
         ttk.Label(right, foreground="#555",
                   text="\u25B2 MAX   \u25BC MIN   \u25A0 leaf (heuristic)   "
                        "\u2717 pruned by alpha-beta   green = best line   "
-                       "click = board & H   double-click = zoom into subtree   drag = move"
+                       "click = board & H   double-click = open subtree   drag = move   "
+                       "Ctrl+wheel = zoom in/out"
                   ).pack(anchor="w", padx=6, pady=(2, 4))
 
         holder = ttk.Frame(right)
@@ -268,6 +287,16 @@ class Connect4GUI(tk.Tk):
         c.bind("<Button-5>", lambda e: c.yview_scroll(3, "units"))
         c.bind("<Shift-Button-4>", lambda e: c.xview_scroll(-3, "units"))
         c.bind("<Shift-Button-5>", lambda e: c.xview_scroll(3, "units"))
+        c.bind("<Shift-MouseWheel>", self.on_shift_wheel)           # Windows / macOS
+        # zoom: Ctrl + wheel (anchored at the mouse pointer)
+        c.bind("<Control-MouseWheel>", self.on_zoom_wheel)          # Windows / macOS
+        c.bind("<Control-Button-4>", lambda e: self.zoom_by(ZOOM_STEP, e.x, e.y))   # Linux
+        c.bind("<Control-Button-5>", lambda e: self.zoom_by(1 / ZOOM_STEP, e.x, e.y))
+        # zoom: keyboard
+        self.bind("<Control-plus>", lambda e: self.zoom_by(ZOOM_STEP))
+        self.bind("<Control-equal>", lambda e: self.zoom_by(ZOOM_STEP))
+        self.bind("<Control-minus>", lambda e: self.zoom_by(1 / ZOOM_STEP))
+        self.bind("<Control-0>", lambda e: self.fit_tree())
 
         # selected-node details: board preview + heuristic values
         detail = ttk.LabelFrame(right, text=" Selected node: board & heuristic values ")
@@ -492,6 +521,8 @@ class Connect4GUI(tk.Tk):
         c = self.tree_canvas
         c.delete("all")
         self.tag_node, self.node_pos = {}, {}
+        self._texts = []
+        self._zoom = 1.0          # the layout below is drawn at 100%
         if self.view_root is None:
             return
         try:
@@ -551,8 +582,7 @@ class Connect4GUI(tk.Tk):
         for x1, y1, x2, y2, col in prunes:
             c.create_line(x1, y1 + R, x2, y2 - R, fill=C_PRUNE, dash=(3, 3))
             self._edge_label(x1, y1 + R, x2, y2 - R, col, C_PRUNE)
-            c.create_text(x2, y2, text="\u2717", fill=C_PRUNE,
-                          font=("Helvetica", 20, "bold"))
+            self._txt(x2, y2, "\u2717", 20, True, C_PRUNE)
 
         for i, (node, x, y, collapsed) in enumerate(nodes):
             tag = f"nd{i}"
@@ -569,19 +599,14 @@ class Connect4GUI(tk.Tk):
             else:                                     # MIN: triangle pointing down
                 c.create_polygon(x, y + R, x - R - 2, y - R, x + R + 2, y - R,
                                  fill=C_MIN, outline=outline, width=width, tags=(tag,))
-            c.create_text(x, y + R + 11, text=fmt(node.value),
-                          font=("Helvetica", 9, "bold" if best else "normal"),
-                          fill="#000", tags=(tag,))
+            self._txt(x, y + R + 11, fmt(node.value), 9, best, "#000", (tag,))
             if collapsed:
-                c.create_text(x, y + R + 24, text="+ more", fill="#777",
-                              font=("Helvetica", 8), tags=(tag,))
+                self._txt(x, y + R + 24, "+ more", 8, False, "#777", (tag,))
 
-        width = max(self._slot * X_GAP + 2 * LEFT, c.winfo_width())
-        height = TOP + (levels + 1) * LEVEL_H
-        c.configure(scrollregion=(0, 0, width, height))
+        # unzoomed size of the whole tree, then apply the default zoom
+        self._base = (self._slot * X_GAP + 2 * LEFT, TOP + levels * LEVEL_H + 50)
         c.update_idletasks()
-        c.xview_moveto(max(0.0, (root_x - c.winfo_width() / 2) / width))
-        c.yview_moveto(0)
+        self.set_zoom(DEFAULT_ZOOM)               # start at 50%; "Fit all" shows everything
 
         note = f"{len(nodes)} nodes drawn, {len(prunes)} pruned branches"
         if reduced:
@@ -596,8 +621,78 @@ class Connect4GUI(tk.Tk):
         ly = y1 + (y2 - y1) * 0.7
         self.tree_canvas.create_rectangle(lx - 7, ly - 7, lx + 7, ly + 7,
                                           fill="white", outline="")
-        self.tree_canvas.create_text(lx, ly, text=str(col + 1), fill=color,
-                                     font=("Helvetica", 9))
+        self._txt(lx, ly, str(col + 1), 9, False, color)
+
+    # ------------------------------------------------------------ zoom
+    def _txt(self, x, y, text, size, bold=False, fill="#000", tags=()):
+        """Create a label that is remembered so its font can follow the zoom."""
+        item = self.tree_canvas.create_text(
+            x, y, text=text, fill=fill, tags=tags,
+            font=("Helvetica", size, "bold" if bold else "normal"))
+        self._texts.append((item, size, bold))
+        return item
+
+    def _update_fonts(self):
+        c, z = self.tree_canvas, self._zoom
+        for item, size, bold in self._texts:
+            s = size * z
+            if s < 5:                       # too small to read: hide the label
+                c.itemconfigure(item, state="hidden")
+            else:
+                c.itemconfigure(item, state="normal",
+                                font=("Helvetica", int(round(s)),
+                                      "bold" if bold else "normal"))
+
+    def set_zoom(self, new_zoom, cx=None, cy=None):
+        """Zoom the drawn tree to `new_zoom` (1.0 = 100%).
+        (cx, cy) = window pixel that must stay fixed (default: top-left)."""
+        c = self.tree_canvas
+        if self.view_root is None:
+            return
+        new_zoom = max(ZOOM_MIN, min(ZOOM_MAX, new_zoom))
+        f = new_zoom / self._zoom
+        if cx is not None:
+            px, py = c.canvasx(cx), c.canvasy(cy)      # point under the mouse (before)
+        c.scale("all", 0, 0, f, f)
+        self._zoom = new_zoom
+        self._update_fonts()
+
+        cw, ch = max(c.winfo_width(), 1), max(c.winfo_height(), 1)
+        w, h = self._base[0] * new_zoom, self._base[1] * new_zoom
+        left = min(0.0, (w - cw) / 2)                  # centre the tree if it is smaller
+        right = left + max(w, cw)                      # than the window
+        bottom = max(h, ch)
+        c.configure(scrollregion=(left, 0, right, bottom))
+        if cx is None:
+            c.xview_moveto(0)
+            c.yview_moveto(0)
+        else:                                          # keep the pointed spot in place
+            c.xview_moveto((px * f - cx - left) / (right - left))
+            c.yview_moveto((py * f - cy) / bottom)
+        self.zoom_var.set(f"{new_zoom * 100:.0f}%")
+        if self.selected is not None:
+            self._draw_ring(self.selected)
+
+    def zoom_by(self, factor, cx=None, cy=None):
+        c = self.tree_canvas
+        if cx is None:                                 # buttons: zoom around the centre
+            cx, cy = c.winfo_width() / 2, c.winfo_height() / 2
+        self.set_zoom(self._zoom * factor, cx, cy)
+
+    def fit_tree(self):
+        """Zoom out (never in) until the whole tree fits in the window."""
+        if self.view_root is None:
+            return
+        c = self.tree_canvas
+        cw, ch = max(c.winfo_width(), 50), max(c.winfo_height(), 50)
+        bw, bh = self._base
+        self.set_zoom(min(1.0, (cw - 4) / bw, (ch - 4) / bh))
+
+    def on_zoom_wheel(self, event):
+        self.zoom_by(ZOOM_STEP if event.delta > 0 else 1 / ZOOM_STEP, event.x, event.y)
+
+    def on_shift_wheel(self, event):
+        self.tree_canvas.xview_scroll(-3 if event.delta > 0 else 3, "units")
 
     # ------------------------------------------------------------ tree input
     def node_at(self, event):
@@ -644,7 +739,9 @@ class Connect4GUI(tk.Tk):
         pos = self.node_pos.get(id(node))
         if pos:
             x, y = pos
-            c.create_rectangle(x - R - 7, y - R - 7, x + R + 7, y + R + 22,
+            z = self._zoom
+            c.create_rectangle(z * (x - R - 7), z * (y - R - 7),
+                               z * (x + R + 7), z * (y + R + 22),
                                outline="#ff8800", width=2, dash=(4, 2), tags="sel")
 
     def select_node(self, node):
