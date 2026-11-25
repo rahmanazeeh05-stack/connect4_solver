@@ -1,18 +1,18 @@
-
 import contextlib
 import numpy as np
 from .genatic import *
 
 
-def main(max_itrations=100, population_size=20,
-         epslione=0.00001, patience=25):
+import numpy as np
+from .genatic import *
+
+
+def main(max_itrations=100, population_size=20, epslione=0.00001, patience=20):
 
     population = genrate_population(population_size)
 
-    global_best_fitness = float('-inf')
-    global_best_weights = None
+    current_fitness = float("-inf")
     no_improvement = 0
-    best_of_n = None
 
     for generation in range(max_itrations):
 
@@ -22,25 +22,25 @@ def main(max_itrations=100, population_size=20,
         max_fitness = np.max(fitness)
         best_of_n = get_best_individuals(population, fitness)
 
-        if max_fitness > global_best_fitness + epslione:
-            global_best_fitness = max_fitness
-            global_best_weights = best_of_n[0].copy()
+        if max_fitness > current_fitness + epslione:
+            current_fitness = max_fitness
             no_improvement = 0
         else:
             no_improvement += 1
 
         print(f"Generation: {generation + 1}")
         print(f"Best fitness: {max_fitness}")
-        print(f"Global best fitness: {global_best_fitness}")
         print(f"No improvement: {no_improvement}")
 
         if no_improvement >= patience:
             print("Converged!")
+            print(f"Best weight: {best_of_n[0]}")
             break
 
-        population = genetic_alg(best_of_n, population_size)
+        new_weights = genetic_alg(best_of_n, population_size)
+        population = new_weights
 
-    return best_of_n[0], global_best_fitness, global_best_weights
+    return best_of_n[0], current_fitness
 
 
 if __name__ == "__main__":
@@ -48,10 +48,8 @@ if __name__ == "__main__":
         file.write("\n-----------------------------------------\n")
 
         with contextlib.redirect_stdout(file):
-            best_weight, fitness, best_weight_over_all = main()
-
-            print(f"Best weight of last generation: {best_weight}")
-            print(f"Best fitness overall: {fitness}")
-            print(f"Best weight overall: {best_weight_over_all}")
+            best_weight, fitness = main()
+            print(best_weight)
+            print(fitness)
 
         file.write("\n-----------------------------------------\n")

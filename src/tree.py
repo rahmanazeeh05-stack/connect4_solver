@@ -24,8 +24,7 @@ def print_tree(node, prefix="", is_last=True, is_root=True):
         node_type = "Heuristic" if node.is_leaf else "Minimax"
 
         print(
-            prefix + branch +
-            f"{player_name} | Column: {node.move} | "
+            prefix + branch + f"{player_name} | Column: {node.move} | "
             f"Depth: {node.depth} | "
             f"{node_type}: {node.value}"
         )
@@ -40,11 +39,6 @@ def print_tree(node, prefix="", is_last=True, is_root=True):
 
     for i, child in enumerate(node.children):
 
-        last_child = (i == len(node.children) - 1)
+        last_child = i == len(node.children) - 1
 
-        print_tree(
-            child,
-            new_prefix,
-            last_child,
-            False
-        )
+        print_tree(child, new_prefix, last_child, False)

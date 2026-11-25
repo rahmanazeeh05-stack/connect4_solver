@@ -1,10 +1,12 @@
-from board import *
-from alphabeta import *
-from hurastic import *
+from .board import *
+from .alphabeta import *
+from .hurastic import *
 import numpy as np
 
-weights1 = np.array([20, 10, 2, 0])
-weights2 = np.array([1, 3, 10, 20])
+weights1 = np.array([340648.64257967 ,596723.19560045 ,614839.78029421 ,730964.84326936]
+)
+weights2 = np.array(
+[101648.67620984 ,250173.64620757 ,567301.47751766 ,982522.83367005])
 
 board = initilize_board()
 k = int(input("enter value of k:"))

@@ -29,42 +29,50 @@ from tkinter import ttk, messagebox
 # the solver modules may live in ./src (harmless if they are next to gui.py)
 
 
-from src.board import (initilize_board, legalmove, makemove, isboardfilled,
-                   ROWS, COL, AI, HUMAN)
+from src.board import (
+    initilize_board,
+    legalmove,
+    makemove,
+    isboardfilled,
+    ROWS,
+    COL,
+    AI,
+    HUMAN,
+)
 from src.alphabeta import bestmove
 from src.hurastic import get_all_windows, H, weight
 
 # ----------------------------------------------------------------- look & feel
-CELL = 80                      # size of one cell on the main board (px)
-PAD = 8                        # gap between a disc and its cell border
-HEADER = CELL                  # empty strip above the board (hover / drop area)
+CELL = 80  # size of one cell on the main board (px)
+PAD = 8  # gap between a disc and its cell border
+HEADER = CELL  # empty strip above the board (hover / drop area)
 BOARD_W = COL * CELL
 BOARD_H = HEADER + ROWS * CELL
 
 C_BOARD = "#2f5bea"
 C_EMPTY = "#d9d9d9"
-C_AI = "#d62828"               # red
-C_HUMAN = "#f6c90e"            # yellow
+C_AI = "#d62828"  # red
+C_HUMAN = "#f6c90e"  # yellow
 C_OUTLINE = "#1b2f7a"
 
-MINI_CELL = 32                 # size of a cell in the small preview board
+MINI_CELL = 32  # size of a cell in the small preview board
 
 # drawn-tree geometry
-LEVEL_H = 95                   # vertical distance between tree levels
-X_GAP = 56                     # horizontal distance between leaf slots
-R = 15                         # node "radius"
+LEVEL_H = 95  # vertical distance between tree levels
+X_GAP = 56  # horizontal distance between leaf slots
+R = 15  # node "radius"
 TOP = 30
 LEFT = 40
-MAX_DRAWN = 4000               # never draw more nodes than this
+MAX_DRAWN = 4000  # never draw more nodes than this
 C_MAX = "#bfd9ff"
 C_MIN = "#ffd9bf"
 C_LEAF = "#e3e3e3"
-C_PV = "#1a9d3a"               # best line (green)
-C_PRUNE = "#d32f2f"            # pruned (red)
-ZOOM_MIN = 0.02                # smallest / largest tree zoom factor
+C_PV = "#1a9d3a"  # best line (green)
+C_PRUNE = "#d32f2f"  # pruned (red)
+ZOOM_MIN = 0.02  # smallest / largest tree zoom factor
 ZOOM_MAX = 4.0
-DEFAULT_ZOOM = 0.5              # zoom used when a new tree is drawn (50%)
-ZOOM_STEP = 1.25              # factor used by the + / - buttons and Ctrl+wheel
+DEFAULT_ZOOM = 0.5  # zoom used when a new tree is drawn (50%)
+ZOOM_STEP = 1.25  # factor used by the + / - buttons and Ctrl+wheel
 
 
 # ------------------------------------------------------------------- helpers
@@ -90,16 +98,23 @@ def fmt(v):
 
 def draw_grid(canvas, board, cell, top=0, pad=PAD):
     """Draw the blue board with discs on any canvas."""
-    canvas.create_rectangle(0, top, COL * cell, top + ROWS * cell,
-                            fill=C_BOARD, outline=C_OUTLINE, width=2)
+    canvas.create_rectangle(
+        0, top, COL * cell, top + ROWS * cell, fill=C_BOARD, outline=C_OUTLINE, width=2
+    )
     for r in range(ROWS):
         for c in range(COL):
             x0 = c * cell + pad
             y0 = top + r * cell + pad
             d = cell - 2 * pad
-            canvas.create_oval(x0, y0, x0 + d, y0 + d,
-                               fill=piece_color(board[r][c]),
-                               outline=C_OUTLINE, width=2)
+            canvas.create_oval(
+                x0,
+                y0,
+                x0 + d,
+                y0 + d,
+                fill=piece_color(board[r][c]),
+                outline=C_OUTLINE,
+                width=2,
+            )
 
 
 def count_nodes(root):
@@ -150,21 +165,21 @@ class Connect4GUI(tk.Tk):
 
         self.board = initilize_board()
         self.k = 4
-        self.game_on = False       # a game is in progress
-        self.busy = True           # True while AI thinks / disc is falling
+        self.game_on = False  # a game is in progress
+        self.busy = True  # True while AI thinks / disc is falling
         self._result = None
 
         # tree-drawing state
-        self.root_node = None      # full tree of the last AI move
-        self.view_root = None      # sub-tree currently displayed
+        self.root_node = None  # full tree of the last AI move
+        self.view_root = None  # sub-tree currently displayed
         self.selected = None
         self.pv_ids = set()
-        self.tag_node = {}         # canvas tag -> Node
-        self.node_pos = {}         # id(Node) -> (x, y)
+        self.tag_node = {}  # canvas tag -> Node
+        self.node_pos = {}  # id(Node) -> (x, y)
         self._press = None
-        self._zoom = 1.0           # current zoom of the drawn tree
-        self._texts = []           # (canvas id, base font size, bold) for zooming labels
-        self._base = (1, 1)        # unzoomed width / height of the drawn tree
+        self._zoom = 1.0  # current zoom of the drawn tree
+        self._texts = []  # (canvas id, base font size, bold) for zooming labels
+        self._base = (1, 1)  # unzoomed width / height of the drawn tree
 
         self._build_controls()
         self._build_board_area()
@@ -179,13 +194,19 @@ class Connect4GUI(tk.Tk):
 
         ttk.Label(bar, text="K (search depth):").pack(side="left")
         self.k_var = tk.StringVar(value="4")
-        ttk.Spinbox(bar, from_=1, to=12, width=4,
-                    textvariable=self.k_var).pack(side="left", padx=(4, 14))
+        ttk.Spinbox(bar, from_=1, to=12, width=4, textvariable=self.k_var).pack(
+            side="left", padx=(4, 14)
+        )
 
         ttk.Label(bar, text="First move:").pack(side="left")
         self.first_var = tk.StringVar(value="AI")
-        ttk.Combobox(bar, width=7, state="readonly", textvariable=self.first_var,
-                     values=["AI", "Human"]).pack(side="left", padx=(4, 14))
+        ttk.Combobox(
+            bar,
+            width=7,
+            state="readonly",
+            textvariable=self.first_var,
+            values=["AI", "Human"],
+        ).pack(side="left", padx=(4, 14))
 
         ttk.Button(bar, text="Start Game", command=self.start_game).pack(side="left")
 
@@ -201,32 +222,48 @@ class Connect4GUI(tk.Tk):
         left = ttk.Frame(self)
         left.grid(row=1, column=0, sticky="n")
 
-        self.canvas = tk.Canvas(left, width=BOARD_W, height=BOARD_H,
-                                highlightthickness=0, bg=self.cget("bg"))
+        self.canvas = tk.Canvas(
+            left,
+            width=BOARD_W,
+            height=BOARD_H,
+            highlightthickness=0,
+            bg=self.cget("bg"),
+        )
         self.canvas.pack()
         self.canvas.bind("<Motion>", self.on_hover)
         self.canvas.bind("<Leave>", lambda e: self.canvas.delete("ghost"))
         self.canvas.bind("<Button-1>", self.on_click)
 
         # column numbers under the board
-        nums = tk.Canvas(left, width=BOARD_W, height=22, highlightthickness=0,
-                         bg=self.cget("bg"))
+        nums = tk.Canvas(
+            left, width=BOARD_W, height=22, highlightthickness=0, bg=self.cget("bg")
+        )
         nums.pack()
         for c in range(COL):
             nums.create_text(c * CELL + CELL // 2, 11, text=str(c + 1))
 
         self.status = tk.StringVar()
-        ttk.Label(left, textvariable=self.status, font=("Helvetica", 12, "bold"),
-                  wraplength=BOARD_W, justify="center").pack(pady=(8, 2))
+        ttk.Label(
+            left,
+            textvariable=self.status,
+            font=("Helvetica", 12, "bold"),
+            wraplength=BOARD_W,
+            justify="center",
+        ).pack(pady=(8, 2))
 
         self.score_var = tk.StringVar()
-        ttk.Label(left, textvariable=self.score_var,
-                  font=("Courier", 10), justify="left").pack(pady=(2, 0))
+        ttk.Label(
+            left, textvariable=self.score_var, font=("Courier", 10), justify="left"
+        ).pack(pady=(2, 0))
 
         self.stats_var = tk.StringVar(value="")
-        ttk.Label(left, textvariable=self.stats_var,
-                  font=("Courier", 10), justify="left",
-                  foreground="#444").pack(pady=(6, 0))
+        ttk.Label(
+            left,
+            textvariable=self.stats_var,
+            font=("Courier", 10),
+            justify="left",
+            foreground="#444",
+        ).pack(pady=(6, 0))
 
     def _build_tree_area(self):
         right = ttk.LabelFrame(self, text=" Minimax tree of the last AI move ")
@@ -238,36 +275,57 @@ class Connect4GUI(tk.Tk):
         ctl.pack(fill="x", padx=6, pady=(4, 0))
         ttk.Label(ctl, text="Levels shown:").pack(side="left")
         self.levels_var = tk.StringVar(value="3")
-        sp = ttk.Spinbox(ctl, from_=1, to=12, width=3, textvariable=self.levels_var,
-                         command=self.draw_tree)
+        sp = ttk.Spinbox(
+            ctl,
+            from_=1,
+            to=12,
+            width=3,
+            textvariable=self.levels_var,
+            command=self.draw_tree,
+        )
         sp.pack(side="left", padx=(4, 10))
         sp.bind("<Return>", lambda e: self.draw_tree())
-        ttk.Button(ctl, text="Back to full tree", command=self.reset_view).pack(side="left")
+        ttk.Button(ctl, text="Back to full tree", command=self.reset_view).pack(
+            side="left"
+        )
         ttk.Separator(ctl, orient="vertical").pack(side="left", fill="y", padx=8)
         ttk.Label(ctl, text="Zoom:").pack(side="left")
-        ttk.Button(ctl, text="\u2212", width=3,
-                   command=lambda: self.zoom_by(1 / ZOOM_STEP)).pack(side="left", padx=(4, 0))
-        ttk.Button(ctl, text="+", width=3,
-                   command=lambda: self.zoom_by(ZOOM_STEP)).pack(side="left", padx=2)
+        ttk.Button(
+            ctl, text="\u2212", width=3, command=lambda: self.zoom_by(1 / ZOOM_STEP)
+        ).pack(side="left", padx=(4, 0))
+        ttk.Button(
+            ctl, text="+", width=3, command=lambda: self.zoom_by(ZOOM_STEP)
+        ).pack(side="left", padx=2)
         ttk.Button(ctl, text="Fit all", command=self.fit_tree).pack(side="left", padx=2)
-        ttk.Button(ctl, text="100%", width=5,
-                   command=lambda: self.set_zoom(1.0)).pack(side="left", padx=2)
+        ttk.Button(ctl, text="100%", width=5, command=lambda: self.set_zoom(1.0)).pack(
+            side="left", padx=2
+        )
         self.zoom_var = tk.StringVar(value="100%")
         ttk.Label(ctl, textvariable=self.zoom_var, width=6).pack(side="left")
         self.tree_info = tk.StringVar()
-        ttk.Label(ctl, textvariable=self.tree_info, foreground="#555").pack(side="left", padx=10)
+        ttk.Label(ctl, textvariable=self.tree_info, foreground="#555").pack(
+            side="left", padx=10
+        )
 
-        ttk.Label(right, foreground="#555",
-                  text="\u25B2 MAX   \u25BC MIN   \u25A0 leaf (heuristic)   "
-                       "\u2717 pruned by alpha-beta   green = best line   "
-                       "click = board & H   double-click = open subtree   drag = move   "
-                       "Ctrl+wheel = zoom in/out"
-                  ).pack(anchor="w", padx=6, pady=(2, 4))
+        ttk.Label(
+            right,
+            foreground="#555",
+            text="\u25b2 MAX   \u25bc MIN   \u25a0 leaf (heuristic)   "
+            "\u2717 pruned by alpha-beta   green = best line   "
+            "click = board & H   double-click = open subtree   drag = move   "
+            "Ctrl+wheel = zoom in/out",
+        ).pack(anchor="w", padx=6, pady=(2, 4))
 
         holder = ttk.Frame(right)
         holder.pack(fill="both", expand=True, padx=6)
-        self.tree_canvas = tk.Canvas(holder, width=720, height=380, bg="white",
-                                     highlightthickness=1, highlightbackground="#bbb")
+        self.tree_canvas = tk.Canvas(
+            holder,
+            width=720,
+            height=380,
+            bg="white",
+            highlightthickness=1,
+            highlightbackground="#bbb",
+        )
         ysb = ttk.Scrollbar(holder, orient="vertical", command=self.tree_canvas.yview)
         xsb = ttk.Scrollbar(holder, orient="horizontal", command=self.tree_canvas.xview)
         self.tree_canvas.configure(yscrollcommand=ysb.set, xscrollcommand=xsb.set)
@@ -282,15 +340,17 @@ class Connect4GUI(tk.Tk):
         c.bind("<B1-Motion>", self.on_tree_drag)
         c.bind("<ButtonRelease-1>", self.on_tree_release)
         c.bind("<Double-Button-1>", self.on_tree_double)
-        c.bind("<MouseWheel>", self.on_wheel)                       # Windows / macOS
+        c.bind("<MouseWheel>", self.on_wheel)  # Windows / macOS
         c.bind("<Button-4>", lambda e: c.yview_scroll(-3, "units"))  # Linux
         c.bind("<Button-5>", lambda e: c.yview_scroll(3, "units"))
         c.bind("<Shift-Button-4>", lambda e: c.xview_scroll(-3, "units"))
         c.bind("<Shift-Button-5>", lambda e: c.xview_scroll(3, "units"))
-        c.bind("<Shift-MouseWheel>", self.on_shift_wheel)           # Windows / macOS
+        c.bind("<Shift-MouseWheel>", self.on_shift_wheel)  # Windows / macOS
         # zoom: Ctrl + wheel (anchored at the mouse pointer)
-        c.bind("<Control-MouseWheel>", self.on_zoom_wheel)          # Windows / macOS
-        c.bind("<Control-Button-4>", lambda e: self.zoom_by(ZOOM_STEP, e.x, e.y))   # Linux
+        c.bind("<Control-MouseWheel>", self.on_zoom_wheel)  # Windows / macOS
+        c.bind(
+            "<Control-Button-4>", lambda e: self.zoom_by(ZOOM_STEP, e.x, e.y)
+        )  # Linux
         c.bind("<Control-Button-5>", lambda e: self.zoom_by(1 / ZOOM_STEP, e.x, e.y))
         # zoom: keyboard
         self.bind("<Control-plus>", lambda e: self.zoom_by(ZOOM_STEP))
@@ -301,12 +361,14 @@ class Connect4GUI(tk.Tk):
         # selected-node details: board preview + heuristic values
         detail = ttk.LabelFrame(right, text=" Selected node: board & heuristic values ")
         detail.pack(fill="x", padx=6, pady=6)
-        self.mini = tk.Canvas(detail, width=COL * MINI_CELL, height=ROWS * MINI_CELL,
-                              highlightthickness=0)
+        self.mini = tk.Canvas(
+            detail, width=COL * MINI_CELL, height=ROWS * MINI_CELL, highlightthickness=0
+        )
         self.mini.pack(side="left", padx=8, pady=8)
         self.detail_var = tk.StringVar(value="Click a node in the tree.")
-        ttk.Label(detail, textvariable=self.detail_var, font=("Courier", 10),
-                  justify="left").pack(side="left", padx=8)
+        ttk.Label(
+            detail, textvariable=self.detail_var, font=("Courier", 10), justify="left"
+        ).pack(side="left", padx=8)
 
     # ------------------------------------------------------------ drawing
     def redraw(self):
@@ -321,7 +383,8 @@ class Connect4GUI(tk.Tk):
         ai_w, hu_w = get_all_windows(self.board)
         self.score_var.set(
             f"Connected-fours  ->  AI: {ai_w[3]}   Human: {hu_w[3]}\n"
-            f"Heuristic H(board) = {fmt(H(ai_w, hu_w))}")
+            f"Heuristic H(board) = {fmt(H(ai_w, hu_w))}"
+        )
 
     # ------------------------------------------------------------ game flow
     def start_game(self):
@@ -333,10 +396,11 @@ class Connect4GUI(tk.Tk):
             messagebox.showerror("Invalid K", "K must be an integer >= 1.")
             return
         if k > 7 and not messagebox.askyesno(
-                "Large K", f"K = {k} may make the AI very slow. Continue?"):
+            "Large K", f"K = {k} may make the AI very slow. Continue?"
+        ):
             return
         if self.busy and self.game_on:
-            return                       # AI is thinking, ignore
+            return  # AI is thinking, ignore
 
         self.k = k
         self.board = initilize_board()
@@ -363,8 +427,10 @@ class Connect4GUI(tk.Tk):
         else:
             result = "It's a draw."
         self.set_status(f"Board full - {result}   (AI {a} : {h} Human)")
-        messagebox.showinfo("Game over",
-                            f"{result}\n\nAI connected-fours: {a}\nHuman connected-fours: {h}")
+        messagebox.showinfo(
+            "Game over",
+            f"{result}\n\nAI connected-fours: {a}\nHuman connected-fours: {h}",
+        )
 
     # ------------------------------------------------------------ human input
     def column_at(self, x):
@@ -380,8 +446,16 @@ class Connect4GUI(tk.Tk):
             return
         d = CELL - 2 * PAD
         x0 = c * CELL + PAD
-        self.canvas.create_oval(x0, PAD, x0 + d, PAD + d, fill=C_HUMAN,
-                                outline=C_OUTLINE, width=2, tags="ghost")
+        self.canvas.create_oval(
+            x0,
+            PAD,
+            x0 + d,
+            PAD + d,
+            fill=C_HUMAN,
+            outline=C_OUTLINE,
+            width=2,
+            tags="ghost",
+        )
 
     def on_click(self, event):
         if self.busy or not self.game_on:
@@ -414,7 +488,7 @@ class Connect4GUI(tk.Tk):
                 col, root = bestmove(snapshot, self.k)
                 elapsed = time.perf_counter() - t0
                 self._result = ("ok", col, root, elapsed, count_nodes(root))
-            except Exception as exc:           # report it in the GUI thread
+            except Exception as exc:  # report it in the GUI thread
                 self._result = ("error", exc)
 
         threading.Thread(target=work, daemon=True).start()
@@ -433,8 +507,10 @@ class Connect4GUI(tk.Tk):
 
         _, col, root, elapsed, nodes = res
         self.show_tree(root)
-        self.stats_var.set(f"Last AI move:  column {col + 1 if col is not None else '-'}\n"
-                           f"Time: {elapsed:.3f} s   Nodes expanded: {nodes}")
+        self.stats_var.set(
+            f"Last AI move:  column {col + 1 if col is not None else '-'}\n"
+            f"Time: {elapsed:.3f} s   Nodes expanded: {nodes}"
+        )
         if col is None:
             self.end_game()
             return
@@ -461,16 +537,23 @@ class Connect4GUI(tk.Tk):
         x0 = col * CELL + PAD
         target = HEADER + row * CELL + PAD
         state = {"y": float(PAD), "v": 4.0}
-        item = self.canvas.create_oval(x0, state["y"], x0 + d, state["y"] + d,
-                                       fill=piece_color(player),
-                                       outline=C_OUTLINE, width=2, tags="fall")
+        item = self.canvas.create_oval(
+            x0,
+            state["y"],
+            x0 + d,
+            state["y"] + d,
+            fill=piece_color(player),
+            outline=C_OUTLINE,
+            width=2,
+            tags="fall",
+        )
 
         def step():
             state["y"] += state["v"]
             state["v"] += 2.0
             if state["y"] >= target:
                 self.canvas.delete(item)
-                makemove(self.board, col, player)     # real move (board.py)
+                makemove(self.board, col, player)  # real move (board.py)
                 self.redraw()
                 done()
                 return
@@ -522,7 +605,7 @@ class Connect4GUI(tk.Tk):
         c.delete("all")
         self.tag_node, self.node_pos = {}, {}
         self._texts = []
-        self._zoom = 1.0          # the layout below is drawn at 100%
+        self._zoom = 1.0  # the layout below is drawn at 100%
         if self.view_root is None:
             return
         try:
@@ -576,8 +659,14 @@ class Connect4GUI(tk.Tk):
 
         # 1) edges  2) pruned branches  3) nodes (on top)
         for x1, y1, x2, y2, col, best in edges:
-            c.create_line(x1, y1 + R, x2, y2 - R,
-                          fill=C_PV if best else "#888", width=3 if best else 1)
+            c.create_line(
+                x1,
+                y1 + R,
+                x2,
+                y2 - R,
+                fill=C_PV if best else "#888",
+                width=3 if best else 1,
+            )
             self._edge_label(x1, y1 + R, x2, y2 - R, col, "#222")
         for x1, y1, x2, y2, col in prunes:
             c.create_line(x1, y1 + R, x2, y2 - R, fill=C_PRUNE, dash=(3, 3))
@@ -590,15 +679,43 @@ class Connect4GUI(tk.Tk):
             self.node_pos[id(node)] = (x, y)
             best = id(node) in self.pv_ids
             outline, width = (C_PV, 3) if best else ("#333", 1.5)
-            if not node.children:                     # leaf: heuristic / terminal
-                c.create_rectangle(x - R + 2, y - R + 2, x + R - 2, y + R - 2,
-                                   fill=C_LEAF, outline=outline, width=width, tags=(tag,))
-            elif is_max_node(node):                   # MAX: triangle pointing up
-                c.create_polygon(x, y - R, x - R - 2, y + R, x + R + 2, y + R,
-                                 fill=C_MAX, outline=outline, width=width, tags=(tag,))
-            else:                                     # MIN: triangle pointing down
-                c.create_polygon(x, y + R, x - R - 2, y - R, x + R + 2, y - R,
-                                 fill=C_MIN, outline=outline, width=width, tags=(tag,))
+            if not node.children:  # leaf: heuristic / terminal
+                c.create_rectangle(
+                    x - R + 2,
+                    y - R + 2,
+                    x + R - 2,
+                    y + R - 2,
+                    fill=C_LEAF,
+                    outline=outline,
+                    width=width,
+                    tags=(tag,),
+                )
+            elif is_max_node(node):  # MAX: triangle pointing up
+                c.create_polygon(
+                    x,
+                    y - R,
+                    x - R - 2,
+                    y + R,
+                    x + R + 2,
+                    y + R,
+                    fill=C_MAX,
+                    outline=outline,
+                    width=width,
+                    tags=(tag,),
+                )
+            else:  # MIN: triangle pointing down
+                c.create_polygon(
+                    x,
+                    y + R,
+                    x - R - 2,
+                    y - R,
+                    x + R + 2,
+                    y - R,
+                    fill=C_MIN,
+                    outline=outline,
+                    width=width,
+                    tags=(tag,),
+                )
             self._txt(x, y + R + 11, fmt(node.value), 9, best, "#000", (tag,))
             if collapsed:
                 self._txt(x, y + R + 24, "+ more", 8, False, "#777", (tag,))
@@ -606,7 +723,7 @@ class Connect4GUI(tk.Tk):
         # unzoomed size of the whole tree, then apply the default zoom
         self._base = (self._slot * X_GAP + 2 * LEFT, TOP + levels * LEVEL_H + 50)
         c.update_idletasks()
-        self.set_zoom(DEFAULT_ZOOM)               # start at 50%; "Fit all" shows everything
+        self.set_zoom(DEFAULT_ZOOM)  # start at 50%; "Fit all" shows everything
 
         note = f"{len(nodes)} nodes drawn, {len(prunes)} pruned branches"
         if reduced:
@@ -619,16 +736,22 @@ class Connect4GUI(tk.Tk):
         """Column number written on an edge."""
         lx = x1 + (x2 - x1) * 0.7
         ly = y1 + (y2 - y1) * 0.7
-        self.tree_canvas.create_rectangle(lx - 7, ly - 7, lx + 7, ly + 7,
-                                          fill="white", outline="")
+        self.tree_canvas.create_rectangle(
+            lx - 7, ly - 7, lx + 7, ly + 7, fill="white", outline=""
+        )
         self._txt(lx, ly, str(col + 1), 9, False, color)
 
     # ------------------------------------------------------------ zoom
     def _txt(self, x, y, text, size, bold=False, fill="#000", tags=()):
         """Create a label that is remembered so its font can follow the zoom."""
         item = self.tree_canvas.create_text(
-            x, y, text=text, fill=fill, tags=tags,
-            font=("Helvetica", size, "bold" if bold else "normal"))
+            x,
+            y,
+            text=text,
+            fill=fill,
+            tags=tags,
+            font=("Helvetica", size, "bold" if bold else "normal"),
+        )
         self._texts.append((item, size, bold))
         return item
 
@@ -636,12 +759,14 @@ class Connect4GUI(tk.Tk):
         c, z = self.tree_canvas, self._zoom
         for item, size, bold in self._texts:
             s = size * z
-            if s < 5:                       # too small to read: hide the label
+            if s < 5:  # too small to read: hide the label
                 c.itemconfigure(item, state="hidden")
             else:
-                c.itemconfigure(item, state="normal",
-                                font=("Helvetica", int(round(s)),
-                                      "bold" if bold else "normal"))
+                c.itemconfigure(
+                    item,
+                    state="normal",
+                    font=("Helvetica", int(round(s)), "bold" if bold else "normal"),
+                )
 
     def set_zoom(self, new_zoom, cx=None, cy=None):
         """Zoom the drawn tree to `new_zoom` (1.0 = 100%).
@@ -652,21 +777,21 @@ class Connect4GUI(tk.Tk):
         new_zoom = max(ZOOM_MIN, min(ZOOM_MAX, new_zoom))
         f = new_zoom / self._zoom
         if cx is not None:
-            px, py = c.canvasx(cx), c.canvasy(cy)      # point under the mouse (before)
+            px, py = c.canvasx(cx), c.canvasy(cy)  # point under the mouse (before)
         c.scale("all", 0, 0, f, f)
         self._zoom = new_zoom
         self._update_fonts()
 
         cw, ch = max(c.winfo_width(), 1), max(c.winfo_height(), 1)
         w, h = self._base[0] * new_zoom, self._base[1] * new_zoom
-        left = min(0.0, (w - cw) / 2)                  # centre the tree if it is smaller
-        right = left + max(w, cw)                      # than the window
+        left = min(0.0, (w - cw) / 2)  # centre the tree if it is smaller
+        right = left + max(w, cw)  # than the window
         bottom = max(h, ch)
         c.configure(scrollregion=(left, 0, right, bottom))
         if cx is None:
             c.xview_moveto(0)
             c.yview_moveto(0)
-        else:                                          # keep the pointed spot in place
+        else:  # keep the pointed spot in place
             c.xview_moveto((px * f - cx - left) / (right - left))
             c.yview_moveto((py * f - cy) / bottom)
         self.zoom_var.set(f"{new_zoom * 100:.0f}%")
@@ -675,7 +800,7 @@ class Connect4GUI(tk.Tk):
 
     def zoom_by(self, factor, cx=None, cy=None):
         c = self.tree_canvas
-        if cx is None:                                 # buttons: zoom around the centre
+        if cx is None:  # buttons: zoom around the centre
             cx, cy = c.winfo_width() / 2, c.winfo_height() / 2
         self.set_zoom(self._zoom * factor, cx, cy)
 
@@ -726,7 +851,7 @@ class Connect4GUI(tk.Tk):
     def on_tree_double(self, _event):
         node = self.node_at(_event)
         if node is not None and node.children:
-            self.view_root = node               # zoom into this sub-tree
+            self.view_root = node  # zoom into this sub-tree
             self.draw_tree()
 
     def on_wheel(self, event):
@@ -740,9 +865,16 @@ class Connect4GUI(tk.Tk):
         if pos:
             x, y = pos
             z = self._zoom
-            c.create_rectangle(z * (x - R - 7), z * (y - R - 7),
-                               z * (x + R + 7), z * (y + R + 22),
-                               outline="#ff8800", width=2, dash=(4, 2), tags="sel")
+            c.create_rectangle(
+                z * (x - R - 7),
+                z * (y - R - 7),
+                z * (x + R + 7),
+                z * (y + R + 22),
+                outline="#ff8800",
+                width=2,
+                dash=(4, 2),
+                tags="sel",
+            )
 
     def select_node(self, node):
         """Show the board and the heuristic values of a tree node."""
@@ -752,14 +884,19 @@ class Connect4GUI(tk.Tk):
         draw_grid(self.mini, node.board, MINI_CELL, top=0, pad=3)
 
         ai_w, hu_w = get_all_windows(node.board)
-        who = "root (current board)" if node.player is None else \
-            f"{'AI' if node.player == AI else 'HUMAN'} played column {node.move + 1}"
-        lines = [f"Node       : {who}",
-                 f"Node value : {fmt(node.value)}",
-                 f"H(board)   : {fmt(H(ai_w, hu_w))}",
-                 "",
-                 "Pieces in an open 4-window:",
-                 "  n   AI   Human   weight"]
+        who = (
+            "root (current board)"
+            if node.player is None
+            else f"{'AI' if node.player == AI else 'HUMAN'} played column {node.move + 1}"
+        )
+        lines = [
+            f"Node       : {who}",
+            f"Node value : {fmt(node.value)}",
+            f"H(board)   : {fmt(H(ai_w, hu_w))}",
+            "",
+            "Pieces in an open 4-window:",
+            "  n   AI   Human   weight",
+        ]
         for i in range(4):
             lines.append(f"  {i + 1}  {ai_w[i]:>3}   {hu_w[i]:>4}   {weight[i]:.2f}")
         lines.append("H = sum Wn * (AI_n - Human_n)")
