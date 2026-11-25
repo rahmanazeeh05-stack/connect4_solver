@@ -24,9 +24,10 @@ while not isboardfilled(board):
         break
     
     human_turn=int(input("choose col 1-7:"))
+    human_turn=human_turn-1
     while human_turn not in legalmove(board):
        human_turn=int(input("invalid col try again:"))
-    makemove(board,human_turn-1,HUMAN)
+    makemove(board,human_turn,HUMAN)
     printboard(board)
     print("-------------------------")
     
